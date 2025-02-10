@@ -88,7 +88,7 @@ console.log('third', thirdTransitionPoint);
 
                 </h2>
                 <p  className='text-white/90 text-xl'> Browse our curated gallery of talented artists and their unique aesthetics. 
-                Find a style that speaks to you, and we'll guide you through your creative journey.</p>
+                Find a style that speaks to you, and we&apos;ll guide you through your creative journey.</p>
                 </div>  
             </div>  
             <div className='min-h-screen flex items-center'>
@@ -105,7 +105,7 @@ console.log('third', thirdTransitionPoint);
                   <span className='bg-white py-1 px-2 text-black font-semibold mr-2 rounded-lg'>
                   Choose Your Style
                   </span>
-                  Select from our collection of artist styles to define your artwork's aesthetic.
+                  Select from our collection of artist styles to define your artwork&apos;s aesthetic.
                   </li>
                   <li className='mb-2'>
                   <span className='bg-white py-1 px-2 text-black font-semibold mr-2 rounded-lg'>

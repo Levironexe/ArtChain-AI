@@ -11,12 +11,9 @@ import ContactForm from './components/drop-us-a-line'
 import SliderPage from './components/ImageSlider'
 
 export default function Home() {
-  const [selectedArtist, setSelectedArtist] = useState<ArtistData | null>(null);
-
   const handleViewGallery = (artist: { artist: Artist }) => {
     const artistData = artistCollections[artist.artist];
     if (artistData) {
-      setSelectedArtist(artistData);
       window.scrollTo(0, 0);
     }
   };

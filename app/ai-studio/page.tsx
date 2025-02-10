@@ -186,10 +186,13 @@ export default function AIStudio() {
       });
 
       alert("Press 'OK' to direct to your SUIET | SUI wallet");
-    } catch (error: any) {
-      console.error("Transaction Error:", error);
-      alert(`Minting Failed: ${error.message || 'Unknown error occurred'}`);
-    }
+    } catch (error: unknown) {
+       if (error instanceof Error) {
+          alert(`Minting Failed: ${error.message}`);
+        } else {
+          alert('Minting Failed: Unknown error occurred');
+        }
+          }
   }
 
   const unlockedStyles = [
@@ -686,12 +689,12 @@ export default function AIStudio() {
                       
                       <div className="space-y-4">
                         {promptHistory.map((item) => (
-                          <button onClick={() => {setNftName(item.name)
-                          item.image && setCurrentSimpleGeneratedImage(item.imageIpfs)
-                          item.price && setMintPrice(item.price)}
-                          }
+                          <button key={item.id} onClick={() => {setNftName(item.name);
+                          item.image && setCurrentSimpleGeneratedImage(item.imageIpfs);
+                          item.price && setMintPrice(item.price);
+                        }}
                           className={`w-full text-left ${currentSimpleGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
-                            <div key={item.id} className="relative bg-gray-900/50 rounded-lg overflow-hidden">
+                            <div className="relative bg-gray-900/50 rounded-lg overflow-hidden">
                               {item.image && (
                                 <img src={item.image} alt="Generated Artwork" className="w-full h-full object-cover" />
                               )}
@@ -743,9 +746,9 @@ export default function AIStudio() {
             
             <div className="space-y-4">
               {chatPromptHistory.map((item) => (
-                <button onClick={() => {setNftNameChat(item.name)
-                item.image && setCurrentChatGeneratedImage(item.imageIpfs)
-                item.price && setMintPriceChat(item.price)}
+                <button key={item.id} onClick={() => {setNftNameChat(item.name);
+                item.image && setCurrentChatGeneratedImage(item.imageIpfs);
+                item.price && setMintPriceChat(item.price);}
                 }
                 className={`w-full text-left ${currentChatGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                   <div key={item.id} className="relative bg-gray-900/50 rounded-lg overflow-hidden">

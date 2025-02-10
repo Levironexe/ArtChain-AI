@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React from 'react';
 import { Palette, Shield, Coins, Cpu } from 'lucide-react';
 
 const features = [
