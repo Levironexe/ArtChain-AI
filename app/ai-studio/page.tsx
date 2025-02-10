@@ -8,19 +8,21 @@ import { marked } from 'marked';
 
 
 interface PromptHistory {
-  id: string;
-  name: string;
-  timestamp: string;
-  style: string;
-  image?: string;
+  id: string,
+  name: string,
+  timestamp: string,
+  style: string,
+  image?: string,
+  imageIpfs: string,
   price: number
 }
 interface ChatPromptHistory {
-  id: string;
-  name: string;
-  timestamp: string;
-  style: string;
-  image?: string;
+  id: string,
+  name: string,
+  timestamp: string,
+  style: string,
+  image?: string,
+  imageIpfs: string,
   price: number
 }
 
@@ -37,8 +39,7 @@ export default function AIStudio() {
     { role: 'assistant', content: 'Hello! I\'m your AI art assistant. I can help you generate images and adjust settings. What would you like to create today?' }
   ]);
 
-  const [simpleIpfsImageUrl, setSimpleIpfsImageUrl] = useState(""); // Store the uploaded IPFS URL of simple image
-  const [chatIpfsImageUrl, setChatIpfsImageUrl] = useState(""); // Store the uploaded IPFS URL of chat image
+  
   const [promptHistory, setPromptHistory] = useState<PromptHistory[]>([]);
   const [chatPromptHistory, setChatPromptHistory] = useState<ChatPromptHistory[]>([]);
   const [gasBudgetInSUI, setGasBudgetInSUI] = useState(0);
@@ -160,7 +161,7 @@ export default function AIStudio() {
         return;
       }
 
-      const currentIpfsImageUrl = interfaceMode === 'simple' ? simpleIpfsImageUrl : chatIpfsImageUrl;
+      const currentIpfsImageUrl = interfaceMode === 'simple' ? currentSimpleGeneratedImage : currentChatGeneratedImage;
       const actualMintPrice = interfaceMode === 'simple' ? mintPrice : mintPriceChat;
       const actualName = interfaceMode === 'simple' ? nftName : nftNameChat;
 
@@ -230,13 +231,11 @@ export default function AIStudio() {
 
       const imageFile = response.data;
       const imageUrl = URL.createObjectURL(imageFile); // Temporary Blob URL
-      setCurrentSimpleGeneratedImage(imageUrl);
 
       const uploadedImageUrl = await uploadToIPFS(imageFile);
       if (!uploadedImageUrl) return;
 
-      setSimpleIpfsImageUrl(uploadedImageUrl); // Store the uploaded URL
-
+      setCurrentSimpleGeneratedImage(uploadedImageUrl);
 
       setPromptHistory(prev => [{
         id: Date.now().toString(),
@@ -244,6 +243,7 @@ export default function AIStudio() {
         timestamp: 'Just now',
         style: selectedStyle,
         image: imageUrl,
+        imageIpfs: uploadedImageUrl,
         price: mintPrice
       }, ...prev]);
 
@@ -255,6 +255,10 @@ export default function AIStudio() {
       setIsGenerating(false);
     }
   };
+
+  console.log('currentSimpleGeneratedImage',currentSimpleGeneratedImage);
+  console.log('currentChatGeneratedImage', currentChatGeneratedImage);
+
 
 
   const handleChatSubmit = async (e: React.FormEvent) => {
@@ -285,8 +289,7 @@ export default function AIStudio() {
         const uploadedImageUrl = await uploadToIPFS(blob);
         if (!uploadedImageUrl) return;
   
-        setChatIpfsImageUrl(uploadedImageUrl); // Store the uploaded URL
-        setCurrentChatGeneratedImage(imageUrl); // Update to use chat mode state
+        setCurrentChatGeneratedImage(uploadedImageUrl); // Update to use chat mode state
 
         setChatHistory(prev => [...prev, {
           role: 'assistant',
@@ -299,6 +302,7 @@ export default function AIStudio() {
           timestamp: 'Just now',
           style: selectedStyle || 'Default',
           image: imageUrl,
+          imageIpfs: uploadedImageUrl,
           price: mintPriceChat
         }, ...prev]);
       } else {
@@ -306,7 +310,6 @@ export default function AIStudio() {
         // Convert arraybuffer to text if it's a JSON response
         const textDecoder = new TextDecoder('utf-8');
         const responseData = JSON.parse(textDecoder.decode(response.data));
-
         setChatHistory(prev => [...prev, {
           role: 'assistant',
           content: responseData.response
@@ -441,12 +444,12 @@ export default function AIStudio() {
                   <div className="right-2 bottom-2">
                       <button
                         onClick={handleGenerate}
-                        disabled={isGenerating}
+                        disabled={isGenerating || isChatGenerating}
                         className={`px-4 py-2 rounded-lg flex items-center gap-2 disabled:cursor-not-allowed ${
                           isGenerating ? 'bg-purple-600/50' : 'bg-purple-600 hover:bg-purple-700'
                         } transition-all`}
                       >
-                        {isGenerating ? (
+                        {isGenerating && currentSimpleGeneratedImage === '' ? (
                           <>
                             <RefreshCw className="w-5 h-5 animate-spin" />
                             Generating...
@@ -601,12 +604,14 @@ export default function AIStudio() {
               <div className='flex flex-col border-b border-r border-l border-gray-500 p-8 rounded-b-lg bg-gray-900/50'>
                 <p className='text-white/60'>NFT mint price</p>
                 <div className='flex gap-2 items-end'>
-                  <p className='text-3xl font-semibold'>{(() => {
-                    if (isGenerating) return '0.0000';
-                    if (interfaceMode === 'simple') return (mintPrice/1000000000).toFixed(4);
-                    if (interfaceMode === 'chat') return (mintPriceChat/1000000000).toFixed(4);
-                  })()} SUI</p>
-                  {usdPrice !== null && (<p className='text-white/60'> ${!isGenerating ? usdPrice.toFixed(2)  : '0.00'} </p>)}
+                <p className='text-3xl font-semibold'>
+                  {interfaceMode === 'simple' 
+                    ? (isGenerating ? '0.0000' : (mintPrice / 1000000000).toFixed(4))
+                    : (isChatGenerating ? '0.0000' : (mintPriceChat / 1000000000).toFixed(4))
+                  } SUI
+                </p>
+                  {usdPrice !== null && (<p className='text-white/60'> ${interfaceMode === 'simple' ? (!isGenerating ? usdPrice.toFixed(2)  : '0.00')
+                  : (!isChatGenerating ? usdPrice.toFixed(2)  : '0.00')} </p>)}
                 </div>
                 <div className="flex gap-4 items-center mt-2">
                   <div className='flex-1 items-center w-full'>
@@ -628,7 +633,7 @@ export default function AIStudio() {
                       disabled={
                         !gasBudgetInSUI || 
                         
-                        (interfaceMode === 'chat' ?gasBudgetInSUI < mintPriceChat/1000000000 ||  !currentChatGeneratedImage : gasBudgetInSUI < mintPrice/1000000000 ||  !currentSimpleGeneratedImage)
+                        (interfaceMode === 'chat' ? gasBudgetInSUI < mintPriceChat/1000000000 ||  !currentChatGeneratedImage : gasBudgetInSUI < mintPrice/1000000000 ||  !currentSimpleGeneratedImage)
                       }
                       className="flex-[7] py-3 px-auto font-medium flex items-center justify-center disabled:cursor-not-allowed"
                     >
@@ -682,10 +687,10 @@ export default function AIStudio() {
                       <div className="space-y-4">
                         {promptHistory.map((item) => (
                           <button onClick={() => {setNftName(item.name)
-                          item.image && setCurrentSimpleGeneratedImage(item.image)
+                          item.image && setCurrentSimpleGeneratedImage(item.imageIpfs)
                           item.price && setMintPrice(item.price)}
                           }
-                          className={`w-full text-left ${currentSimpleGeneratedImage === item.image ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
+                          className={`w-full text-left ${currentSimpleGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                             <div key={item.id} className="relative bg-gray-900/50 rounded-lg overflow-hidden">
                               {item.image && (
                                 <img src={item.image} alt="Generated Artwork" className="w-full h-full object-cover" />
@@ -739,10 +744,10 @@ export default function AIStudio() {
             <div className="space-y-4">
               {chatPromptHistory.map((item) => (
                 <button onClick={() => {setNftNameChat(item.name)
-                item.image && setCurrentChatGeneratedImage(item.image)
+                item.image && setCurrentChatGeneratedImage(item.imageIpfs)
                 item.price && setMintPriceChat(item.price)}
                 }
-                className={`w-full text-left ${currentChatGeneratedImage === item.image ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
+                className={`w-full text-left ${currentChatGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                   <div key={item.id} className="relative bg-gray-900/50 rounded-lg overflow-hidden">
                     {item.image && (
                       <img src={item.image} alt="Generated Artwork" className="w-full h-full object-cover" />
