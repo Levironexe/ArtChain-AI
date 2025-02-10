@@ -1,11 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { Wand2, History, Sparkles, Palette, RefreshCw, Trash2 , HandHeart, Leaf, Clock, Brush, SquareChevronRight, Eclipse, MessageSquare, Image, ALargeSmall } from 'lucide-react';
+import { Wand2, History, Sparkles, Palette, RefreshCw, Trash2 , HandHeart, Leaf, Clock, Brush, SquareChevronRight, Eclipse, MessageSquare, ImageIcon, ALargeSmall } from 'lucide-react';
 import axios from 'axios';
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import { TransactionBlock } from "@mysten/sui.js/transactions";
 import { marked } from 'marked';
-
+import Image from 'next/image';
 
 interface PromptHistory {
   id: string,
@@ -338,7 +338,7 @@ export default function AIStudio() {
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${interfaceMode === 'simple' ? 'bg-purple-600' : 'bg-gray-700'
               }`}
           >
-            <Image className="w-5 h-5" />
+            <ImageIcon className="w-5 h-5" />
             <span>Simple Mode</span>
           </button>
           <button
@@ -689,15 +689,21 @@ export default function AIStudio() {
                       
                       <div className="space-y-4">
                         {promptHistory.map((item) => (
-                          <button key={item.id} onClick={() => {setNftName(item.name);
-                          item.image && setCurrentSimpleGeneratedImage(item.imageIpfs);
-                          item.price && setMintPrice(item.price);
+                          <button key={item.id} onClick={() => {
+                          setNftName(item.name);
+                          if (item.image) setCurrentSimpleGeneratedImage(item.imageIpfs);
+                          if (item.price) setMintPrice(item.price);
                         }}
                           className={`w-full text-left ${currentSimpleGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                             <div className="relative bg-gray-900/50 rounded-lg overflow-hidden">
                               {item.image && (
-                                <img src={item.image} alt="Generated Artwork" className="w-full h-full object-cover" />
-                              )}
+                                  <Image 
+                                  src={item.image}
+                                  alt="Generated Artwork"
+                                  fill
+                                  className="object-cover"
+                                />                              
+                                )}
                               <div className='absolute inset-0 p-4 flex flex-col justify-between bg-gradient-to-t from-black via-black/80 to-transparent'>
                                 <div className='flex justify-end'>
                                   <p className='text-right font-semibold rounded-full border-purple-500 px-3 py-1 text-purple-500 bg-black/80'>{item.price/1000000000} SUI</p>
@@ -747,13 +753,18 @@ export default function AIStudio() {
             <div className="space-y-4">
               {chatPromptHistory.map((item) => (
                 <button key={item.id} onClick={() => {setNftNameChat(item.name);
-                item.image && setCurrentChatGeneratedImage(item.imageIpfs);
-                item.price && setMintPriceChat(item.price);}
+                if (item.image) setCurrentChatGeneratedImage(item.imageIpfs);
+                if (item.price) setMintPriceChat(item.price);}
                 }
                 className={`w-full text-left ${currentChatGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                   <div key={item.id} className="relative bg-gray-900/50 rounded-lg overflow-hidden">
                     {item.image && (
-                      <img src={item.image} alt="Generated Artwork" className="w-full h-full object-cover" />
+                        <Image 
+                        src={item.image}
+                        alt="Generated Artwork"
+                        fill
+                        className="object-cover"
+                      />
                     )}
                     <div className='absolute inset-0 p-4 flex flex-col justify-between bg-gradient-to-t from-black via-black/80 to-transparent'>
                       <div className='flex justify-end'>
