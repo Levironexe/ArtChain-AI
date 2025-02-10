@@ -697,13 +697,8 @@ export default function AIStudio() {
                           className={`w-full text-left ${currentSimpleGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                             <div className="relative bg-gray-900/50 rounded-lg overflow-hidden">
                               {item.image && (
-                                  <Image 
-                                  src={item.image}
-                                  alt="Generated Artwork"
-                                  fill
-                                  className="object-cover"
-                                />                              
-                                )}
+                                <img src={item.image} alt="Generated Artwork" className="w-full h-full object-cover" />
+                              )}
                               <div className='absolute inset-0 p-4 flex flex-col justify-between bg-gradient-to-t from-black via-black/80 to-transparent'>
                                 <div className='flex justify-end'>
                                   <p className='text-right font-semibold rounded-full border-purple-500 px-3 py-1 text-purple-500 bg-black/80'>{item.price/1000000000} SUI</p>
