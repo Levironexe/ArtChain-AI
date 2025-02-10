@@ -2,7 +2,6 @@
 'use client'
 import Hero from '@/app/components/Hero'
 import Features from '@/app/components/Features'
-import HowItWorks from '@/app/components/HowItWorks'
 import ArtistSection from '@/app/components/ArtistSection'
 import OnScrollSection from './components/on-scroll-tutorial'
 import { useState } from 'react'

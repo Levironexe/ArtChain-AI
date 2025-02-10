@@ -8,7 +8,7 @@ interface SliderProps {
     reverse?: boolean;
 }
 
-const Slider = ({ items, width, height, reverse = false }: SliderProps) => {
+const Slider = ({ items }: SliderProps) => {
     return (
         <section className="py-24 min-h-screen">
             <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">

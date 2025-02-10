@@ -359,7 +359,7 @@ export default function AIStudio() {
                 <div className='flex items-center border-t border-x border-gray-500  justify-between rounded-t-lg px-8 py-4 bg-gradient-to-r from-gray-950 to-gray-900'>
                   <div className='flex gap-3 items-center'>
                     <ALargeSmall className='h-8 w-8'/>
-                    <p className="text-[18px] font-medium text-white">Enter name <span className='text-gray-400'>(this will later be saved as your NFT's name)</span></p>
+                    <p className="text-[18px] font-medium text-white">Enter name <span className='text-gray-400'>(this will later be saved as your NFT&apos;s name)</span></p>
                   </div>
                 </div>
                 <div className='border-b border-gray-500'></div>
@@ -379,7 +379,7 @@ export default function AIStudio() {
                 <div className='flex items-center border-t border-x border-gray-500  justify-between rounded-t-lg px-8 py-4 bg-gradient-to-r from-gray-950 to-gray-900'>
                   <div className='flex gap-3 items-center'>
                     <ALargeSmall className='h-8 w-8'/>
-                    <p className="text-[18px] font-medium text-white">Enter name <span className='text-gray-400'>(this will later be saved as your NFT's name)</span></p>
+                    <p className="text-[18px] font-medium text-white">Enter name <span className='text-gray-400'>(this will later be saved as your NFT&apos;s name)</span></p>
                   </div>
                 </div>
                 <div className='border-b border-gray-500'></div>

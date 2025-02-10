@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Share2, Cpu, Database, Palette, CirclePlus } from 'lucide-react';
+import { Cpu, Database, Palette, CirclePlus } from 'lucide-react';
 
 interface ArtPiece {
   id: string;
@@ -121,11 +121,11 @@ export default function ArtistGallery({ artist }: ArtistGalleryProps) {
             <h2 className="text-2xl font-bold">AI Training Dataset</h2>
           </div>
           <p className="text-gray-400 mb-4">
-            This collection includes a comprehensive AI training dataset that captures the essence of {artist.name}'s unique artistic style.
+            This collection includes a comprehensive AI training dataset that captures the essence of {artist.name}&apos;s unique artistic style.
             Once unlocked, you can use this dataset to:
           </p>
           <ul className="list-disc list-inside text-gray-300 space-y-2 mb-6">
-            <li>Generate new artwork in the artist's signature style</li>
+            <li>Generate new artwork in the artist&apos;s signature style</li>
             <li>Train custom AI models for your own projects</li>
             <li>Study and analyze the artistic techniques</li>
             <li>Create variations and derivatives</li>

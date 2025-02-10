@@ -24,7 +24,7 @@ const features = [
   }
 ];
 
-const Features = forwardRef((props, ref) => {
+const Features = () => {
   return (
     <div className="py-24 bg-black/50 min-h-screen">
       <div className="max-w-[700px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,7 +46,7 @@ const Features = forwardRef((props, ref) => {
       </div>
     </div>
   );
-});
+};
 
 Features.displayName = 'Features';
 
