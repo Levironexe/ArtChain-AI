@@ -13,7 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networks} defaultNetwork="devnet">
-        <WalletProvider>
+        <WalletProvider autoConnect={true}>
           {children}
         </WalletProvider>
       </SuiClientProvider>

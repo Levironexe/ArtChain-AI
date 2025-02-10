@@ -13,7 +13,7 @@ const Navbar = () => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
-  
+
     window.addEventListener('scroll', handleScroll);
     // Trigger initial scroll position
     handleScroll(); // Add this to set initial scroll position
@@ -44,7 +44,7 @@ const Navbar = () => {
               </Link>
             </div>
 
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-8 font-semibold">
               <button
                 
                 className="text-gray-300 hover:text-white transition-colors"
@@ -52,18 +52,34 @@ const Navbar = () => {
                 <Link href={'./'}>Home</Link>
               </button>
               <button
-
-                className="text-gray-300 hover:text-white transition-colors"
-              >
-                <Link href={'/features'}>Features</Link>
-                
-              </button>
-              <button
-
-                className="text-gray-300 hover:text-white transition-colors"
+              className="text-gray-300 hover:text-white transition-colors"
               >
                 <Link href={'/gallery'}>Gallery</Link>
               </button>
+              <button
+                className="text-gray-300 hover:text-white transition-colors"
+              >
+              <Link href={'/#tutorial'}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById('tutorial');
+                  const offset = -400; // Adjust this value to scroll further (increase for more scroll)
+                  
+                  if (element) {
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+                    
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: 'smooth'
+                    });
+                  }
+                }}>
+                Tutorial
+              </Link>
+                
+              </button>
+
               <button
 
                 className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
@@ -115,7 +131,7 @@ const Navbar = () => {
 
               className="text-2xl text-gray-300 hover:text-white transition-colors"
             >
-               <Link href={'/features'}>Features</Link>
+               <Link href={'/#features'}>Features</Link>
             </button>
             <button
 

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { Wand2, History, Sparkles, Palette, RefreshCw, Trash2 , HandHeart, Leaf, Clock, Brush, SquareChevronRight, Eclipse, MessageSquare, Image } from 'lucide-react';
+import { Wand2, History, Sparkles, Palette, RefreshCw, Trash2 , HandHeart, Leaf, Clock, Brush, SquareChevronRight, Eclipse, MessageSquare, Image, ALargeSmall } from 'lucide-react';
 import axios from 'axios';
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import { TransactionBlock } from "@mysten/sui.js/transactions";
@@ -9,7 +9,7 @@ import { marked } from 'marked';
 
 interface PromptHistory {
   id: string;
-  prompt: string;
+  name: string;
   timestamp: string;
   style: string;
   image?: string;
@@ -17,7 +17,7 @@ interface PromptHistory {
 }
 interface ChatPromptHistory {
   id: string;
-  prompt: string;
+  name: string;
   timestamp: string;
   style: string;
   image?: string;
@@ -43,39 +43,45 @@ export default function AIStudio() {
   const [chatPromptHistory, setChatPromptHistory] = useState<ChatPromptHistory[]>([]);
   const [gasBudgetInSUI, setGasBudgetInSUI] = useState(0);
   const [mintPrice, setMintPrice] = useState(0);
+  const [mintPriceChat, setMintPriceChat] = useState(0);
+  const [nftName, setNftName] = useState('');
+  const [nftNameChat, setNftNameChat] = useState('');
   const [usdPrice, setUsdPrice] = useState<number | null>(null);
   const packageId = "0xc8c7d5883b225e78dfe08031822fe791be784b56113efeb65dfd18ce43d45aa9";
   const account = useCurrentAccount();
   const suiClient = useSuiClient();
 
 
+
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 // Function to get SUI price in USD
   useEffect(() => {
-    // Define async function inside useEffect
-    const updateUSDPrice = async () => {
-      try {
-        const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
-          params: {
-            ids: 'sui',
-            vs_currencies: 'usd'
-          },
-          headers: {
-            'x-cg-demo-api-key': 'CG-U7W2Nv8xyyMk2NKjFSbu1RDA',
-          }
-        });
-        const suiPrice = response.data.sui.usd;
-        const suiAmount = mintPrice / 1000000000; // Convert from MIST to SUI
-        setUsdPrice(suiAmount * suiPrice);
-      } catch (error) {
-        console.error('Error fetching SUI price:', error);
-        setUsdPrice(null);
-      }
-    };
-
-    // Call the async function
     updateUSDPrice();
-  }, [mintPrice]);
+  }, [interfaceMode, mintPrice, mintPriceChat]);
+
+  console.log('Mint price (normal mode)', mintPrice);
+  console.log('Mint price (chat mode)',mintPriceChat);
+  console.log('Chat length',prompt.length);
+  const updateUSDPrice = async () => {
+    try {
+      const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+        params: {
+          ids: 'sui',
+          vs_currencies: 'usd'
+        },
+        headers: {
+          'x-cg-demo-api-key': 'CG-U7W2Nv8xyyMk2NKjFSbu1RDA',
+        }
+      });
+      const suiPrice = response.data.sui.usd;
+      const suiAmount = interfaceMode === 'simple' ? mintPrice / 1000000000 : mintPriceChat/1000000000;
+      setUsdPrice(suiAmount * suiPrice);
+    } catch (error) {
+      console.error('Error fetching SUI price:', error);
+      setUsdPrice(null);
+    }
+  };
+
   async function uploadToIPFS(file: Blob) {
     const formData = new FormData();
     formData.append("file", file);
@@ -123,6 +129,15 @@ export default function AIStudio() {
       alert("Please enter a gas budget for this transaction!");
       return;
     }
+    if (interfaceMode === 'simple' && !nftName) {
+      alert("Please enter art name!");
+      return;
+    }
+    if (interfaceMode === 'chat' && !nftNameChat) {
+      alert("Please enter art name!");
+      return;
+    }
+
     try {
       const tx = new TransactionBlock();
       const { data: coins } = await suiClient.getCoins({
@@ -145,15 +160,16 @@ export default function AIStudio() {
         return;
       }
 
-      const currentPrompt = interfaceMode === 'simple' ? prompt : chatHistory[chatHistory.length - 2]?.content || '';
       const currentIpfsImageUrl = interfaceMode === 'simple' ? simpleIpfsImageUrl : chatIpfsImageUrl;
+      const actualMintPrice = interfaceMode === 'simple' ? mintPrice : mintPriceChat;
+      const actualName = interfaceMode === 'simple' ? nftName : nftNameChat;
 
       tx.moveCall({
         target: `${packageId}::nft_contract::mint_with_price`,
         arguments: [ 
           tx.object(sufficientCoin.coinObjectId),
-          tx.pure(mintPrice),  // Price
-          tx.pure(currentPrompt), // name
+          tx.pure(actualMintPrice),  // Price
+          tx.pure(actualName), // name
           tx.pure(`Inspired by ${artistName}`),
           tx.pure(currentIpfsImageUrl) // URL
         ]
@@ -224,7 +240,7 @@ export default function AIStudio() {
 
       setPromptHistory(prev => [{
         id: Date.now().toString(),
-        prompt,
+        name: nftName,
         timestamp: 'Just now',
         style: selectedStyle,
         image: imageUrl,
@@ -266,8 +282,6 @@ export default function AIStudio() {
       if (contentType.startsWith('image/')) {
         const blob = new Blob([response.data], { type: contentType });
         const imageUrl = URL.createObjectURL(blob);
-
-        
         const uploadedImageUrl = await uploadToIPFS(blob);
         if (!uploadedImageUrl) return;
   
@@ -281,11 +295,11 @@ export default function AIStudio() {
 
         setChatPromptHistory(prev => [{
           id: Date.now().toString(),
-          prompt: userPrompt,
+          name: nftNameChat,
           timestamp: 'Just now',
           style: selectedStyle || 'Default',
           image: imageUrl,
-          price: mintPrice
+          price: mintPriceChat
         }, ...prev]);
       } else {
         // Handle text response
@@ -310,7 +324,7 @@ export default function AIStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pt-16">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900/50 to-black text-white pt-16">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex space-x-4 mb-8">
           <button
@@ -332,18 +346,61 @@ export default function AIStudio() {
         </div>
         <div className=" grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-gray-900 rounded-xl p-8 border border-gray-500">
+            <div className="bg-gray-900/50 rounded-xl p-8 border border-gray-500">
               <h2 className="text-3xl font-bold mb-6 flex items-center gap-2">
                 <Wand2 className="w-8 h-8 text-purple-400" />
                 AI Studio
               </h2>
+              {interfaceMode ==='simple' ? (
+                <div className="mb-8">
+                <div className='flex items-center border-t border-x border-gray-500  justify-between rounded-t-lg px-8 py-4 bg-gradient-to-r from-gray-950 to-gray-900'>
+                  <div className='flex gap-3 items-center'>
+                    <ALargeSmall className='h-8 w-8'/>
+                    <p className="text-[18px] font-medium text-white">Enter name <span className='text-gray-400'>(this will later be saved as your NFT's name)</span></p>
+                  </div>
+                </div>
+                <div className='border-b border-gray-500'></div>
+                <div className=" rounded-b-lg border-b border-x border-gray-500">
+                  <textarea
+                    value={nftName}
+                    onChange={(e) => {
+                        setNftName(e.target.value);                   
+                    }}
+                    placeholder="Enter art name"
+                    className="w-full min-h-12 bg-gray-900/50 pt-4 px-8 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+              ) : (
+                <div className="mb-8">
+                <div className='flex items-center border-t border-x border-gray-500  justify-between rounded-t-lg px-8 py-4 bg-gradient-to-r from-gray-950 to-gray-900'>
+                  <div className='flex gap-3 items-center'>
+                    <ALargeSmall className='h-8 w-8'/>
+                    <p className="text-[18px] font-medium text-white">Enter name <span className='text-gray-400'>(this will later be saved as your NFT's name)</span></p>
+                  </div>
+                </div>
+                <div className='border-b border-gray-500'></div>
+                <div className=" rounded-b-lg border-b border-x border-gray-500">
+                  <textarea
+                    value={nftNameChat}
+                    onChange={(e) => {
 
+                        setNftNameChat(e.target.value);
+                      }
+                    }
+                    placeholder="Enter art name"
+                    className="w-full min-h-12 bg-gray-900/50 pt-4 px-8 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+              )
+              }
+              
               <div className="mb-8 bg-gray-900/50">
               <div className='py-4 px-8 flex gap-3 bg-gradient-to-r from-gray-950 to-gray-900 border-t border-x rounded-t-lg border-gray-500'>
                 <Eclipse/>
                 <p className="block text-[18px] font-medium text-white">Select Style</p>
               </div>
-                
                 <div className='border-b border-gray-500'></div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-8 rounded-b-lg border-b border-x border-gray-500">
                   {unlockedStyles.map(style => (
@@ -408,8 +465,9 @@ export default function AIStudio() {
                 <div className=" rounded-b-lg border-b border-x border-gray-500">
                   <textarea
                     value={prompt}
-                    onChange={(e) => {setPrompt(e.target.value)
-                      setMintPrice(e.target.value.length * 10000000)
+                    onChange={(e) => {
+                      setPrompt(e.target.value);
+                      setMintPrice(e.target.value.length * 10000000);
                     }}
                     placeholder="Describe the artwork you want to generate..."
                     className="w-full min-h-32 h-fit  bg-gray-900/50 pt-4 px-8 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:outline-none"
@@ -421,12 +479,12 @@ export default function AIStudio() {
                   <div className='border-t border-x border-gray-500  justify-between rounded-t-lg px-8 py-4 bg-gradient-to-r from-gray-950 to-gray-900'>
                   <div className='flex gap-3 items-center'>
                     <SquareChevronRight/>
-                    <p className="block text-[18px] font-medium text-white">Prompt</p>
+                    <p className="block text-[18px] font-medium text-white">Chat with our AI assistant</p>
                   </div>
                   </div>
                   <div className='border-b border-gray-500'></div>
                   <div className="mb-6 border-b border-x border-gray-500 rounded-b-lg">
-                  <div className="bg-gray-900/50 rounded-lg p-4 h-[50vh] mb-4 overflow-y-auto">
+                  <div className="bg-gray-900/50 rounded-lg p-4 h-[50vh] overflow-y-auto">
                     {chatHistory.map((message, index) => (
                       <div
                         key={index}
@@ -461,11 +519,16 @@ export default function AIStudio() {
                     <input
                       type="text"
                       value={prompt}
-                      onChange={(e) => {(selectedStyle ? setPrompt(e.target.value) : alert("Please choose an artist's style before generating"))
-                        setMintPrice(e.target.value.length * 10000000)
+                      onChange={(e) => {
+                        if (!selectedStyle) {
+                          alert("Please choose an artist's style before generating");
+                          return;
+                        }
+                        setPrompt(e.target.value);
+                        setMintPriceChat(e.target.value.length * 12000000);
                       }}
                       placeholder="Chat with AI assistant..."
-                      className="w-full bg-gray-900/50 rounded-lg p-4 pr-24 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                      className="w-full bg-gray-950/50 rounded-lg p-4 pr-24 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:outline-none"
                     />
                     <button
                       type="submit"
@@ -507,7 +570,7 @@ export default function AIStudio() {
                 </div>
                   
               ) : (
-                <div className="aspect-square rounded-lg bg-gray-900/50 flex items-center justify-center">
+                <div className="aspect-square rounded-lg bg-gray-900/50 flex items-center justify-center mb-6 border border-gray-500">
                   {isChatGenerating ? (
                     <div className="text-center">
                       <RefreshCw className="w-12 h-12 animate-spin mx-auto mb-4 text-purple-400" />
@@ -535,10 +598,14 @@ export default function AIStudio() {
               </div>
               <div className='border-b border-gray-500'></div>
 
-              <div className='flex flex-col border-b border-r border-l border-gray-500 p-8 rounded-b-lg bg-gray-900'>
+              <div className='flex flex-col border-b border-r border-l border-gray-500 p-8 rounded-b-lg bg-gray-900/50'>
                 <p className='text-white/60'>NFT mint price</p>
                 <div className='flex gap-2 items-end'>
-                  <p className='text-3xl font-semibold'>{!isGenerating ? (mintPrice/1000000000).toFixed(4) : '0.0000'} SUI</p>
+                  <p className='text-3xl font-semibold'>{(() => {
+                    if (isGenerating) return '0.0000';
+                    if (interfaceMode === 'simple') return (mintPrice/1000000000).toFixed(4);
+                    if (interfaceMode === 'chat') return (mintPriceChat/1000000000).toFixed(4);
+                  })()} SUI</p>
                   {usdPrice !== null && (<p className='text-white/60'> ${!isGenerating ? usdPrice.toFixed(2)  : '0.00'} </p>)}
                 </div>
                 <div className="flex gap-4 items-center mt-2">
@@ -560,8 +627,8 @@ export default function AIStudio() {
                       onClick={handleMintNFT}
                       disabled={
                         !gasBudgetInSUI || 
-                        gasBudgetInSUI < mintPrice/1000000000 || 
-                        (interfaceMode === 'chat' ? !currentChatGeneratedImage : !currentSimpleGeneratedImage)
+                        
+                        (interfaceMode === 'chat' ?gasBudgetInSUI < mintPriceChat/1000000000 ||  !currentChatGeneratedImage : gasBudgetInSUI < mintPrice/1000000000 ||  !currentSimpleGeneratedImage)
                       }
                       className="flex-[7] py-3 px-auto font-medium flex items-center justify-center disabled:cursor-not-allowed"
                     >
@@ -590,7 +657,7 @@ export default function AIStudio() {
             </div>
           </div>
           {interfaceMode === 'simple' ? (
-                      <div className="bg-gray-900 rounded-xl p-8 border border-gray-500 h-fit max-h-[1200px] overflow-y-auto">
+                      <div className="bg-gray-900/50 rounded-xl p-8 border border-gray-500 h-fit max-h-[1200px] overflow-y-auto">
             
                       <div className="flex items-center justify-between mb-6">
                         <div className='flex items-center justify-between gap-2'>
@@ -614,7 +681,7 @@ export default function AIStudio() {
                       
                       <div className="space-y-4">
                         {promptHistory.map((item) => (
-                          <button onClick={() => {setPrompt(item.prompt)
+                          <button onClick={() => {setNftName(item.name)
                           item.image && setCurrentSimpleGeneratedImage(item.image)
                           item.price && setMintPrice(item.price)}
                           }
@@ -629,7 +696,7 @@ export default function AIStudio() {
                                 </div>
           
                                 <div className='text-left'>
-                                  <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.prompt}</p>
+                                  <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.name}</p>
           
                                   <div className=" flex items-center justify-between text-[14px] ">
                                   <div>
@@ -650,14 +717,14 @@ export default function AIStudio() {
                       </div>
                     </div>
           ) : (         
-          <div className="bg-gray-900 rounded-xl p-8 border border-gray-500 h-fit max-h-[1200px] overflow-y-auto">  
+          <div className="bg-gray-900/50 rounded-xl p-8 border border-gray-500 h-fit max-h-[1200px] overflow-y-auto">  
             <div className="flex items-center justify-between mb-6">
               <div className='flex items-center gap-2'>
                 <History className="w-6 h-6 text-purple-400" />
                 <div className='flex items-end gap-2'>
                   <h3 className="text-xl font-semibold">
                     Prompt History
-                    <span className='text-[14px] text-gray-400 ml-2'>(Pro mode)</span>
+                    <span className='text-[14px] text-gray-400 ml-2 font-normal'>(Pro mode)</span>
                   </h3>
                 </div>
                 <button
@@ -671,9 +738,9 @@ export default function AIStudio() {
             
             <div className="space-y-4">
               {chatPromptHistory.map((item) => (
-                <button onClick={() => {setPrompt(item.prompt)
+                <button onClick={() => {setNftNameChat(item.name)
                 item.image && setCurrentChatGeneratedImage(item.image)
-                item.price && setMintPrice(item.price)}
+                item.price && setMintPriceChat(item.price)}
                 }
                 className={`w-full text-left ${currentChatGeneratedImage === item.image ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                   <div key={item.id} className="relative bg-gray-900/50 rounded-lg overflow-hidden">
@@ -685,14 +752,13 @@ export default function AIStudio() {
                         <p className='text-right font-semibold rounded-full border-purple-500 px-3 py-1 text-purple-500 bg-black/80'>{item.price/1000000000} SUI</p>
                       </div>  
                       <div className='text-left'>
-                        <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.prompt}</p>
+                        <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.name}</p>
 
                         <div className=" flex items-center justify-between text-[14px] ">
                         <div>
                           <p>{item.style}</p>
                           <span className='text-gray-400 text-[12px]'>{item.timestamp}</span>
                         </div>
-
                           <div className='p-2 rounded-full bg-main_purple/15 border border-main_purple'>
                             <div className='h-3 w-3 rounded-full bg-main_purple'>
                             </div>

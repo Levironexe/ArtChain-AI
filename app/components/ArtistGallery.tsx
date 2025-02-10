@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Share2, Cpu, Database, Palette, Lock } from 'lucide-react';
+import { Heart, Share2, Cpu, Database, Palette, CirclePlus } from 'lucide-react';
 
 interface ArtPiece {
   id: string;
@@ -11,7 +11,7 @@ interface ArtPiece {
 interface Collection {
   name: string;
   description: string;
-  price: string;
+  numOfGenerate: string;
   aiDatasetSize: string;
   style: string;
   pieces: ArtPiece[];
@@ -33,18 +33,18 @@ export default function ArtistGallery({ artist }: ArtistGalleryProps) {
       {/* Artist Header */}
       <div className="relative h-64 overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src={artist.collection.pieces[0].image} 
-            alt="Cover" 
+          <img
+            src={artist.collection.pieces[0].image}
+            alt="Cover"
             className="w-full h-full object-cover opacity-30"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-8">
           <div className="max-w-7xl mx-auto flex items-end space-x-6 px-4 sm:px-6 lg:px-8">
-            <img 
-              src={artist.image} 
-              alt={artist.name} 
+            <img
+              src={artist.image}
+              alt={artist.name}
               className="object-cover w-24 h-24 rounded-full border-4 border-purple-600"
             />
             <div>
@@ -76,14 +76,15 @@ export default function ArtistGallery({ artist }: ArtistGalleryProps) {
             </div>
             <div className="flex flex-col justify-center items-center bg-gray-900/50 rounded-xl p-8">
               <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold mb-2">Collection Price</h3>
-                <p className="text-4xl font-bold text-purple-400">{artist.collection.price}</p>
-                <p className="text-gray-400 mt-2">Includes AI training dataset</p>
+                <h3 className="text-2xl font-bold mb-2">Number of Uses</h3>
+                <p className="text-3xl font-bold text-purple-400">{artist.collection.numOfGenerate}</p>
+
               </div>
-              <button className="w-full max-w-md py-3 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center justify-center space-x-2 transition-all">
-                <Lock className="w-5 h-5" />
-                <span>Unlock Collection & Dataset</span>
+              <button className="w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center justify-center space-x-2 transition-all">
+                <CirclePlus className="w-4 h-4" />
+                <span>Add collection to AI Studio</span>
               </button>
+              <div className='pt-3 italic text-white/50'>Feature coming soon</div>
             </div>
           </div>
         </div>
@@ -93,9 +94,9 @@ export default function ArtistGallery({ artist }: ArtistGalleryProps) {
           {artist.collection.pieces.map((piece) => (
             <div key={piece.id} className="bg-gray-800/50 rounded-xl overflow-hidden">
               <div className="relative aspect-w-1 aspect-h-1">
-                <img 
-                  src={piece.image} 
-                  alt={piece.title} 
+                <img
+                  src={piece.image}
+                  alt={piece.title}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity">
@@ -120,7 +121,7 @@ export default function ArtistGallery({ artist }: ArtistGalleryProps) {
             <h2 className="text-2xl font-bold">AI Training Dataset</h2>
           </div>
           <p className="text-gray-400 mb-4">
-            This collection includes a comprehensive AI training dataset that captures the essence of {artist.name}'s unique artistic style. 
+            This collection includes a comprehensive AI training dataset that captures the essence of {artist.name}'s unique artistic style.
             Once unlocked, you can use this dataset to:
           </p>
           <ul className="list-disc list-inside text-gray-300 space-y-2 mb-6">

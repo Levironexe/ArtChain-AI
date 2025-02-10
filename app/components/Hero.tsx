@@ -6,9 +6,9 @@ export default function Hero() {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&q=80" 
-          alt="Abstract Art Background" 
+        <img
+          src="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&q=80"
+          alt="Abstract Art Background"
           className="w-full h-full object-cover opacity-30"
         />
       </div>
@@ -21,18 +21,11 @@ export default function Hero() {
           Create, collect, and trade unique AI-generated artwork backed by blockchain technology.
           Join the revolution of digital art ownership.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        
-          <button className="px-8 py-4 bg-transparent border-2 border-purple-600 hover:bg-purple-600/20 rounded-lg font-semibold transition-all">
-            Upload Collection
-          </button>
-          <button
-            className="px-8 py-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-all "
-          >
-            <Link href='/gallery'>Explore Gallery</Link>
-          </button>
+        <div className="flex flex-col sm:flex-row gap-6 justify-center sm:mt-20">
+          <Link className="px-12 py-3 bg-transparent border-2 border-purple-600 hover:bg-purple-600/20 rounded-lg text-lg font-semibold transition-all" href='/gallery'>Explore Gallery</Link>
+          <Link className="flex items-center px-12 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-lg font-semibold transition-all" href='/ai-studio'>Generate Image</Link>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
