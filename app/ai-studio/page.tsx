@@ -5,30 +5,44 @@ import axios from 'axios';
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from "@mysten/dapp-kit";
 import { TransactionBlock } from "@mysten/sui.js/transactions";
 import { marked } from 'marked';
-import Image from 'next/image';
 
 interface PromptHistory {
   id: string,
-  name: string,
+  artistName: string,
+  nftNname: string,
   timestamp: string,
   style: string,
+  walletAddress: string,
   image?: string,
   imageIpfs: string,
   price: number
 }
 interface ChatPromptHistory {
   id: string,
-  name: string,
+  artistName: string,
+  nftNname: string,
   timestamp: string,
   style: string,
+  walletAddress: string,
   image?: string,
   imageIpfs: string,
+  price: number
+}
+interface MintedHistory {
+  id: string,
+  artistName: string,
+  nftNname: string,
+  timestamp: string,
+  style: string,
+  walletAddress: string,
+  imageIpfs: string | null,
   price: number
 }
 
 export default function AIStudio() {
   const [prompt, setPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
+  const [selectedArtist, setSelectedArtist] = useState('');
   const [artistName, setArtistName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isChatGenerating, setIsChatGenerating] = useState(false);
@@ -41,6 +55,7 @@ export default function AIStudio() {
 
   
   const [promptHistory, setPromptHistory] = useState<PromptHistory[]>([]);
+  const [mintedHistory, setMintedHistory] = useState<MintedHistory[]>([]);
   const [chatPromptHistory, setChatPromptHistory] = useState<ChatPromptHistory[]>([]);
   const [gasBudgetInSUI, setGasBudgetInSUI] = useState(0);
   const [mintPrice, setMintPrice] = useState(0);
@@ -48,7 +63,7 @@ export default function AIStudio() {
   const [nftName, setNftName] = useState('');
   const [nftNameChat, setNftNameChat] = useState('');
   const [usdPrice, setUsdPrice] = useState<number | null>(null);
-  const packageId = "0xc8c7d5883b225e78dfe08031822fe791be784b56113efeb65dfd18ce43d45aa9";
+  const packageId = "0x53fd8cb2e9416f3750cfc57e095ae6a456727f3afdc6a92d061ac90875823edf";
   const account = useCurrentAccount();
   const suiClient = useSuiClient();
 
@@ -60,9 +75,6 @@ export default function AIStudio() {
     updateUSDPrice();
   }, [interfaceMode, mintPrice, mintPriceChat]);
 
-  console.log('Mint price (normal mode)', mintPrice);
-  console.log('Mint price (chat mode)',mintPriceChat);
-  console.log('Chat length',prompt.length);
   const updateUSDPrice = async () => {
     try {
       const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
@@ -139,6 +151,7 @@ export default function AIStudio() {
       return;
     }
 
+
     try {
       const tx = new TransactionBlock();
       const { data: coins } = await suiClient.getCoins({
@@ -162,16 +175,47 @@ export default function AIStudio() {
       }
 
       const currentIpfsImageUrl = interfaceMode === 'simple' ? currentSimpleGeneratedImage : currentChatGeneratedImage;
+
+
+      if (mintedHistory.filter(entry => entry.imageIpfs === currentIpfsImageUrl).length !== 0) {
+        alert(`This artwork has already been minted as an NFT`);
+        return;
+      }
+
       const actualMintPrice = interfaceMode === 'simple' ? mintPrice : mintPriceChat;
       const actualName = interfaceMode === 'simple' ? nftName : nftNameChat;
+      const currentImage = interfaceMode === 'simple' ? promptHistory.find(item => item.imageIpfs === currentSimpleGeneratedImage) : chatPromptHistory.findLast(item => item.imageIpfs === currentChatGeneratedImage)
+      if (!currentImage) {
+        alert("Please generate an image first!");
+        return;
+      }
+
+      const artistNameToUse = currentImage.artistName;
+      const addressToUse = currentImage.walletAddress;
+      const currentImageUrl = interfaceMode === 'simple' 
+      ? currentSimpleGeneratedImage 
+      : currentChatGeneratedImage;
+
+
+      setMintedHistory(prev => [{
+        id: Date.now().toString(),
+        artistName: artistNameToUse,
+        nftNname: actualName,
+        timestamp: 'Just now',
+        style: selectedStyle,
+        walletAddress: addressToUse,
+        imageIpfs: currentImageUrl,
+        price: actualMintPrice
+      }, ...prev]);
 
       tx.moveCall({
         target: `${packageId}::nft_contract::mint_with_price`,
         arguments: [ 
           tx.object(sufficientCoin.coinObjectId),
+          tx.pure(addressToUse),
           tx.pure(actualMintPrice),  // Price
           tx.pure(actualName), // name
-          tx.pure(`Inspired by ${artistName}`),
+          tx.pure(`Artwork inspired by ${artistNameToUse}`),
           tx.pure(currentIpfsImageUrl) // URL
         ]
       });
@@ -200,16 +244,18 @@ export default function AIStudio() {
       id: '1',
       name: 'Super Ani',
       artist: 'Kim Jung Gi',
-      thumbnail: '/images/output.png'
+      thumbnail: '/images/output.png',
+      address: '0xa44cec36a8c308c31d99ee9308361937c927132984a76691a2d46b6399d0541d'
     },
     {
       id: '2',
       name: 'Digital Surrealism',
       artist: 'Emma Watson',
-      thumbnail: 'https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80'
+      thumbnail: 'https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80',
+      address: '0xcdfcd2576f6f9208a2cbae546627283a25ed2d91e816390af487a9a952bcf881'
     }
   ];
-
+  console.log('Chosen artist style 0xa44 acc Phuoc, 0xcdf acc Na', selectedArtist)
   const handleGenerate = async () => {
     if (!prompt){
       alert("Please tell us what you prefer to!")
@@ -222,7 +268,6 @@ export default function AIStudio() {
     
 
     setIsGenerating(true);
-
     try {
       const response = await axios.get('http://127.0.0.1:8000/', {
         params: {
@@ -242,9 +287,11 @@ export default function AIStudio() {
 
       setPromptHistory(prev => [{
         id: Date.now().toString(),
-        name: nftName,
+        artistName: artistName,
+        nftNname: nftName,
         timestamp: 'Just now',
         style: selectedStyle,
+        walletAddress: selectedArtist,
         image: imageUrl,
         imageIpfs: uploadedImageUrl,
         price: mintPrice
@@ -301,9 +348,11 @@ export default function AIStudio() {
 
         setChatPromptHistory(prev => [{
           id: Date.now().toString(),
-          name: nftNameChat,
+          artistName: artistName,
+          nftNname: nftNameChat,
           timestamp: 'Just now',
           style: selectedStyle || 'Default',
+          walletAddress: selectedArtist,
           image: imageUrl,
           imageIpfs: uploadedImageUrl,
           price: mintPriceChat
@@ -414,6 +463,7 @@ export default function AIStudio() {
                       key={style.id}
                       onClick={() => {setSelectedStyle(style.name)
                         setArtistName(style.artist)
+                        setSelectedArtist(style.address)
                       } 
                       }
                       className={`relative rounded-lg overflow-hidden aspect-video group hover:scale-105 transition-all duration-300 ${
@@ -690,9 +740,10 @@ export default function AIStudio() {
                       <div className="space-y-4">
                         {promptHistory.map((item) => (
                           <button key={item.id} onClick={() => {
-                          setNftName(item.name);
+                          setNftName(item.nftNname);
                           if (item.image) setCurrentSimpleGeneratedImage(item.imageIpfs);
-                          if (item.price) setMintPrice(item.price);
+                          if (item.price) setMintPrice(item.price)
+                          if (item.walletAddress) setSelectedArtist(item.walletAddress);
                         }}
                           className={`w-full text-left ${currentSimpleGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                             <div className="relative bg-gray-900/50 rounded-lg overflow-hidden">
@@ -705,7 +756,7 @@ export default function AIStudio() {
                                 </div>
           
                                 <div className='text-left'>
-                                  <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.name}</p>
+                                  <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.nftNname}</p>
           
                                   <div className=" flex items-center justify-between text-[14px] ">
                                   <div>
@@ -746,27 +797,21 @@ export default function AIStudio() {
             
             <div className="space-y-4">
               {chatPromptHistory.map((item) => (
-                <button key={item.id} onClick={() => {setNftNameChat(item.name);
+                <button key={item.id} onClick={() => {setNftNameChat(item.nftNname);
                 if (item.image) setCurrentChatGeneratedImage(item.imageIpfs);
                 if (item.price) setMintPriceChat(item.price);}
                 }
                 className={`w-full text-left ${currentChatGeneratedImage === item.imageIpfs ? 'ring-2 ring-main_purple rounded-lg' : ''}`}>
                   <div key={item.id} className="relative bg-gray-900/50 rounded-lg overflow-hidden">
                     {item.image && (
-                        <Image 
-                        src={item.image}
-                        alt="Generated Artwork"
-                        fill
-                        className="object-cover"
-                      />
+                      <img src={item.image} alt="Generated Artwork" className="w-full h-full object-cover" />
                     )}
                     <div className='absolute inset-0 p-4 flex flex-col justify-between bg-gradient-to-t from-black via-black/80 to-transparent'>
                       <div className='flex justify-end'>
                         <p className='text-right font-semibold rounded-full border-purple-500 px-3 py-1 text-purple-500 bg-black/80'>{item.price/1000000000} SUI</p>
                       </div>  
                       <div className='text-left'>
-                        <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.name}</p>
-
+                        <p className="text-[20px] mb-4 capitalize text-purple-500 font-bold">{item.nftNname}</p>
                         <div className=" flex items-center justify-between text-[14px] ">
                         <div>
                           <p>{item.style}</p>
