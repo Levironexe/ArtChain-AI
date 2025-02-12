@@ -712,7 +712,6 @@ export default function AIStudio() {
                                     <p>{item.style}</p>
                                     <span className='text-gray-400 text-[12px]'>{item.timestamp}</span>
                                   </div>
-          
                                     <div className='p-2 rounded-full bg-main_purple/15 border border-main_purple'>
                                       <div className='h-3 w-3 rounded-full bg-main_purple'>
                                       </div>
